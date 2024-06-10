@@ -12,11 +12,18 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import {useNavigate} from "react-router-dom";
+import {useLoginMutation} from "../redux/api/authQueries";
+import CircularProgress from '@mui/material/CircularProgress';
+import {useDispatch} from "react-redux";
+import { login as loginAuth } from '../redux/slices/authSlice'
+
 
 
 export default function SignIn() {
 
     const navigate = useNavigate();
+    const [login, { isLoading: loginLoading}] = useLoginMutation();
+    const dispatch = useDispatch();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -26,6 +33,19 @@ export default function SignIn() {
             password: formData.get('password'),
             rememberMe: formData.get('remember'),
         });
+        login({
+            email: formData.get('email'),
+            password: formData.get('password'),
+            // rememberMe: formData.get('remember'),
+        }).unwrap().then((data) => {
+            console.log(data);
+            navigate('/app/dashboard');
+            dispatch(loginAuth(data.data.user));
+            localStorage.setItem('at', data.data.accessToken);
+            localStorage.setItem('rt', data.data.refreshToken);
+        }).catch((error) => {
+            console.error(error);
+        });
     };
 
     function forgotPassword(){
@@ -33,8 +53,10 @@ export default function SignIn() {
     }
 
     return (
-            <Container maxWidth="sm" sx={{
+            <Grid container sx={{
                 backgroundColor: 'white',
+                // border: "1px solid red",
+                // width: "100vw",
             }}>
                 <CssBaseline/>
                 <Box
@@ -92,6 +114,7 @@ export default function SignIn() {
                                     Sign In
                                 </Button>
                             </Grid>
+                            {loginLoading && <CircularProgress />}
                             <Grid item xs>
                                 <Link onClick={forgotPassword} variant="body2" sx={{mt: 9, mb: 2}}>
                                     Forgot password?
@@ -101,6 +124,6 @@ export default function SignIn() {
 
                     </Box>
                 </Box>
-            </Container>
+            </Grid>
     );
 }
